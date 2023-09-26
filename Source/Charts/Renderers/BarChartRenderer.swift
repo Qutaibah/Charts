@@ -40,6 +40,7 @@ open class BarChartRenderer: BarLineScatterCandleBubbleRenderer
     /// The ````internal```` specifier is to allow subclasses (HorizontalBar) to populate the same array
     internal lazy var accessibilityOrderedElements: [[NSUIAccessibilityElement]] = accessibilityCreateEmptyOrderedElements()
 
+    private var cornerRadius: CGFloat = 3
     private typealias Buffer = [CGRect]
     
     @objc open weak var dataProvider: BarChartDataProvider?
@@ -351,7 +352,11 @@ open class BarChartRenderer: BarLineScatterCandleBubbleRenderer
                 guard viewPortHandler.isInBoundsRight(barRect.origin.x) else { break }
 
                 context.setFillColor(dataSet.barShadowColor.cgColor)
-                context.fill(barRect)
+                let bezierPath = UIBezierPath(roundedRect: barRect,
+                                              byRoundingCorners:[.topRight, .topLeft],
+                                              cornerRadii: CGSize(width: cornerRadius, height: cornerRadius))
+                context.addPath(bezierPath.cgPath)
+                context.drawPath(using: .fill)
             }
         }
         
@@ -379,8 +384,18 @@ open class BarChartRenderer: BarLineScatterCandleBubbleRenderer
                 context.setFillColor(dataSet.color(atIndex: j).cgColor)
             }
             
-            context.fill(barRect)
-            
+            let stack = buffer.first(where: { ($0.origin.y + $0.size.height) == barRect.origin.y })
+            if stack == nil {
+                let bezierPath = UIBezierPath(roundedRect: barRect,
+                                              byRoundingCorners:[.topRight, .topLeft],
+                                              cornerRadii: CGSize(width: cornerRadius, height: cornerRadius))
+                context.addPath(bezierPath.cgPath)
+                
+                context.drawPath(using: .fill)
+            } else {
+                context.fill(barRect)
+            }
+
             if drawBorder
             {
                 context.setStrokeColor(borderColor.cgColor)
@@ -744,7 +759,12 @@ open class BarChartRenderer: BarLineScatterCandleBubbleRenderer
                 
                 setHighlightDrawPos(highlight: high, barRect: barRect)
                 
-                context.fill(barRect)
+                let bezierPath = UIBezierPath(roundedRect: barRect,
+                                              byRoundingCorners:[.topRight, .topLeft],
+                                              cornerRadii: CGSize(width: cornerRadius, height: cornerRadius))
+                context.addPath(bezierPath.cgPath)
+                context.drawPath(using: .fill)
+
             }
         }
     }
